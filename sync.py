@@ -28,9 +28,7 @@ def create_archive_dir(m):
 	found = False
 	for line in data:
 		# should only have 3 
-		sp = line.decode().split(" ") 
-		if len(sp) != 3:
-			raise Exception(f"list return bad len: {sp}")
+		sp = line.decode().rsplit(" ", 2)
 		[prop, delim, path] = sp
 		if delim == '"/"':
 			delim = "/"
