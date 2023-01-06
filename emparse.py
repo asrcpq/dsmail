@@ -7,17 +7,37 @@ def llget(d, key):
 			result.append(v)
 	return result
 
+def proc_word(word):
+	if word.startswith("=?") and word.endswith("?="):
+		(data, enc) = decode_header(word)[0]
+		word = data.decode(enc)
+		return word
+	else:
+		return word
+
+def proc_line(line):
+	return " ".join([proc_word(word) for word in line.split()])
+
 def proc_block(block):
 	header = []
 	res = stage1(block)
-	print(res["header"])
 
 	disp = llget(res["header"], "Content-Disposition")
 	if len(disp) > 0:
 		fields = disp[0].split(";")
 		if fields[0] == "attachment":
-			fields[1].strip()
-			print("attachment: {}")
+			fn = ""
+			for field in fields:
+				field = field.strip()
+				sp = field.split("=", 1)
+				if sp[0] == "filename":
+					# NOTE: dirty
+					fns = sp[1].removeprefix('"')
+					fns = fns.removesuffix('"')
+					for word in fns.split():
+						fn += proc_word(word)
+			return ("attachment", fn)
+	return ("content", "unimpl")
 
 def stage2(lines, ty):
 	result = {}
@@ -25,6 +45,8 @@ def stage2(lines, ty):
 		delim = lines[0]
 		# split blocks
 		blocks = []
+		attachments = []
+		contents = []
 		current_block = []
 		for line in lines[1:]:
 			if line == delim:
@@ -33,10 +55,14 @@ def stage2(lines, ty):
 				continue
 			current_block.append(line)
 		for block in blocks:
-			proc_block(block)
+			(ty, body) = proc_block(block)
+			if ty == "attachment":
+				attachments.append(body)
+			else:
+				contents.append(body)
 		return {
-			"body": "\n".join(["\n".join(block) + "\n" for block in blocks]),
-			"attachments": [],
+			"body": "\n".join(["\n".join(content) for content in contents]),
+			"attachments": attachments,
 		}
 	# TODO: html render
 	if ty == "text/plain" or ty == "text/html":
@@ -58,19 +84,16 @@ def stage1(b):
 			break_point = idx
 			break
 		if line[0].isspace():
-			tmp_header[1] += ' '
-			for word in line.split():
-				if word.startswith("=?") and word.endswith("?="):
-					(data, enc) = decode_header(word)[0]
-					word = data.decode(enc)
-				tmp_header[1] += ' ' + word
+			line = proc_line(line)
+			tmp_header[1] += " " + line
 			continue
 		if tmp_header:
 			header.append(tmp_header)
 			tmp_header = None
 		sp = line.split(': ', 1)
 		if len(sp) == 2:
-			tmp_header = [sp[0], sp[1]]
+			line = proc_line(sp[1])
+			tmp_header = [sp[0], line]
 		else:
 			tmp_header = [sp[0], ""]
 	return {

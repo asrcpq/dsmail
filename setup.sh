@@ -1,1 +1,1 @@
-mkdir -p inbox archive
+mkdir -p inbox archive todo
