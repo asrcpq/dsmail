@@ -1,1 +1,1 @@
-mkdir -p inbox archive todo
+mkdir -p inbox archive todo extract

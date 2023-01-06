@@ -1,121 +1,111 @@
-from email.header import decode_header
+from emutil import *
+from pathlib import Path, PurePath
 
-def llget(d, key):
-	result = []
-	for (k, v) in d:
-		if k == key:
-			result.append(v)
-	return result
-
-def proc_word(word):
-	if word.startswith("=?") and word.endswith("?="):
-		(data, enc) = decode_header(word)[0]
-		word = data.decode(enc)
-		return word
-	else:
-		return word
-
-def proc_line(line):
-	return " ".join([proc_word(word) for word in line.split()])
-
-def proc_block(block):
-	header = []
-	res = stage1(block)
-
-	disp = llget(res["header"], "Content-Disposition")
-	if len(disp) > 0:
-		fields = disp[0].split(";")
-		if fields[0] == "attachment":
-			fn = ""
-			for field in fields:
-				field = field.strip()
-				sp = field.split("=", 1)
-				if sp[0] == "filename":
-					# NOTE: dirty
-					fns = sp[1].removeprefix('"')
-					fns = fns.removesuffix('"')
-					for word in fns.split():
-						fn += proc_word(word)
-			return ("attachment", fn)
-	return ("content", "unimpl")
-
-def stage2(lines, ty):
-	result = {}
-	if ty == "multipart/mixed":
-		delim = lines[0]
-		# split blocks
-		blocks = []
-		attachments = []
-		contents = []
-		current_block = []
-		for line in lines[1:]:
-			if line == delim:
-				blocks.append(current_block)
-				current_block = []
-				continue
-			current_block.append(line)
-		for block in blocks:
-			(ty, body) = proc_block(block)
-			if ty == "attachment":
-				attachments.append(body)
-			else:
-				contents.append(body)
-		return {
-			"body": "\n".join(["\n".join(content) for content in contents]),
-			"attachments": attachments,
-		}
-	# TODO: html render
-	if ty == "text/plain" or ty == "text/html":
-		return {
-			"body": "\n".join(lines),
-			"attachments": [],
-		}
-	else:
-		raise Exception(f"Unhandled type {ty}")
-
-def stage1(b):
-	header = []
-	body = []
+def parse_header(lines):
+	headers = []
 	tmp_header = None
-	break_point = 0
-	for (idx, line) in enumerate(b):
+	for line in lines:
 		line = line.rstrip()
-		if not line:
-			break_point = idx
-			break
 		if line[0].isspace():
-			line = proc_line(line)
-			tmp_header[1] += " " + line
+			tmp_header[1] += line.strip()
 			continue
 		if tmp_header:
-			header.append(tmp_header)
-			tmp_header = None
-		sp = line.split(': ', 1)
-		if len(sp) == 2:
-			line = proc_line(sp[1])
-			tmp_header = [sp[0], line]
-		else:
+			headers.append(tmp_header)
+		sp = line.split(": ", 1)
+		if len(sp) == 1:
 			tmp_header = [sp[0], ""]
-	return {
-		"header": header,
-		"body": b[break_point + 1:],
-	}
+		else:
+			tmp_header = [sp[0], sp[1]]
+	# push the last header field
+	if tmp_header:
+		headers.append(tmp_header)
 
-# python email module cannot handle modern mails, just write a simple one
+	for header in headers:
+		fields = header[1].split(";")
+		# rfc2047
+		for idx in range(len(fields)):
+			new_field = [proc_word(w) for w in fields[idx].split(" ")]
+			fields[idx] = " ".join(new_field)
+		header[1] = fields[0]
+		header.append([])
+		# x=y
+		for idx in range(1, len(fields)):
+			sp = fields[idx].split('=', 1)
+			if len(sp) == 2:
+				v = sp[1]
+				# NOTE: dirty
+				v = v.removeprefix('"')
+				v = v.removesuffix('"')
+				v = proc_word(v)
+				header[2].append([sp[0], v])
+			else:
+				header[2].append([sp[0]])
+	return headers
+
+def proc_block(lines):
+	(header, body) = split_block(lines)
+	header = parse_header(header)
+	ct = llget(header, "Content-Type")[0][1]
+	if ct.startswith("multipart"):
+		delim = body[0]
+		blocks = []
+		linebuf = []
+		for line in body[1:]:
+			if line == delim or line == delim + "--":
+				(h, b) = proc_block(linebuf)
+				blocks.append((h, b))
+				linebuf = []
+			else:
+				linebuf.append(line)
+	else:
+		blocks = parse_body(body, header)
+	return (header, blocks)
+
 def load_email(f):
-	e = stage1(open(f).read().splitlines())
-	ct = llget(e["header"], "Content-Type")[0].split(";")[0]
-	new = stage2(e["body"], ct)
-	e |= new
-	return e
+	lines = open(f).read().splitlines()
+	return proc_block(lines)
+
+def print_block(b):
+	if isinstance(b[1], list):
+		print(b[0], len(b[1]))
+		for b in b[1]:
+			print_block(b)
+		return
+	print(b[0], len(b[1]))
+
+def extract(path):
+	(h, bs) = load_email(path)
+	name = PurePath(path).stem
+	Path(f"extract/{name}").mkdir()
+
+	if isinstance(bs, str):
+		with open(f"extract/{name}/body", "w") as f:
+			print(bs, file = f)
+		return
+		
+	for idx, (h, b) in enumerate(bs):
+		cd = llget(h, "Content-Disposition")
+		suffix = ""
+		if len(cd) > 0:
+			if cd[0][1] == "attachment":
+				for [k, v] in cd[0][2]:
+					if k == "filename":
+						suffix = f"-{v}"
+						break
+		ext = ""
+		match llget(h, "Content-Type")[0][1]:
+			case "application/x-zip-compression":
+				ext = ".xz"
+		path = f"extract/{name}/{idx}{suffix}{ext}"
+		if isinstance(b, str):
+			with open(path, "w") as f:
+				print(b, file = f)
+		elif isinstance(b, bytes):
+			with open(path, "wb") as f:
+				f.write(b)
+		else:
+			raise Exception(type(b))
 
 if __name__ == "__main__":
 	import sys
-	e = load_email(sys.argv[1])
-	for k, v in e["header"]:
-		if k in ["Subject", "From", "Sender", "To", "Date"]:
-			print(f"[33m{k}:[0m {v}")
-	print()
-	# print(e["body"])
-	# print()
-	# print(llget(e["header"], "Subject"))
+	extract(sys.argv[1])

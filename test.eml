@@ -1,0 +1,11 @@
+Content-Type: multipart/foo
+
+---haha
+Content-Type: plain/text
+
+fofo
+---haha
+Content-Type: plain/text
+
+baba
+---haha--
