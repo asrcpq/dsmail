@@ -54,8 +54,23 @@ def parse_body(lines, header):
 def test_attachment(header):
 	cd = llget(header, "Content-Disposition")
 	if len(cd) > 0:
+		vall = ""
+		enc = ""
 		if cd[0][1] == "attachment":
 			for [k, v] in cd[0][2]:
 				if k == "filename":
 					return v
+				# RFC2231
+				if k.startswith("filename"):
+					v = v.rsplit("=", 1)[-1]
+					sp = v.rsplit("'")
+					if len(sp) == 3:
+						enc = sp[0]
+					v = sp[-1]
+					v = v.split(";", 1)[0]
+					vall += v
+		if vall:
+			vall = vall.replace("%", "")
+			bs = bytes.fromhex(vall)
+			return bs.decode(enc)
 	return None

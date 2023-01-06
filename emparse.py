@@ -53,8 +53,7 @@ def proc_block(lines):
 		first = True
 		for line in body:
 			line = line.rstrip()
-			if line == delim or line == delim + "--":
-				print("delim")
+			if delim in line: # NOTE: maybe more strict test?
 				if first:
 					first = False
 					linebuf = []
