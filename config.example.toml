@@ -1,0 +1,5 @@
+[accounts.example]
+username = "abc@example.com"
+password = "foobar"
+address = "mail.example.com"
+select = ["INBOX", "spam"]
