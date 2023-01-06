@@ -1,6 +1,13 @@
-cd "$(dirname "$0")/.."
-while true; do
-	date -u +"%FT%TZ"
-	python3 sync.py "$1"
-	sleep 600
-done
+if [ "$1" = "server" ]; then
+	cd "$(dirname "$0")/.."
+	while true; do
+		date -u +"%FT%TZ"
+		python3 sync.py "$1"
+		sleep 600
+	done
+elif [ "$1" = "proc" ]; then
+	cd "$(dirname "$0")/.."
+	python3 simple_proc.py
+else
+	exit 1
+fi
