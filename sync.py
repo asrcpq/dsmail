@@ -80,11 +80,11 @@ def proc_account(name, m, box):
 
 # prepare global variables
 year = datetime.date.today().year
-localdir = f'{os.environ["HOME"]}/xdg/mail/inbox'
+localdir = "inbox"
 epoch = get_epoch()
 
 if __name__ == "__main__":
-	conf = tomllib.load(open("config.toml", "rb"))
+	conf = tomllib.load(open(sys.argv[1], "rb"))
 	for (name, ac) in conf["accounts"].items():
 		m = login(ac)
 		for sel in ac["select"]:
