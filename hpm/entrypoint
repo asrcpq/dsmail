@@ -1,0 +1,6 @@
+cd "$(dirname "$0")/.."
+while true; do
+	date -u +"%FT%TZ"
+	python3 sync.py "$1"
+	sleep 600
+done
