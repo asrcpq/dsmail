@@ -1,4 +1,4 @@
-from emparse import load_email, llget, block_summary, pw
+from emparse import load_email, llget, block_summary, pw, summary
 from extractor import extract
 from pathlib import PurePath
 import os, shutil, sys
@@ -30,7 +30,9 @@ def action(table):
 			# archive mode, remove extracted
 			if target == "archive":
 				name = PurePath(f"{target}/{fn}").stem
-				shutil.rmtree("extract/{name}")
+				directory = "extract/{name}"
+				if os.path.exists(directory):
+					shutil.rmtree(directory)
 
 source = "inbox"
 if len(sys.argv) >= 2:
