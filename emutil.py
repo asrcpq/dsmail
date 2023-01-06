@@ -1,15 +1,17 @@
 from email.header import decode_header
 import quopri, base64
 
+# split block to head and body
 def split_block(lines):
-	split_point = None
+	split1 = None
 	for (idx, line) in enumerate(lines):
 		line = line.rstrip()
 		if not line:
-			split_point = idx
+			split = idx
 			break
-	return (lines[:split_point], lines[split_point + 1:])
+	return (lines[:split], lines[split + 1:])
 
+# convert RFC2047
 def proc_word(word):
 	if word.startswith("=?") and word.endswith("?="):
 		(data, enc) = decode_header(word)[0]
@@ -48,3 +50,12 @@ def parse_body(lines, header):
 			lines = lines.decode(v, errors = "replace")
 			break
 	return lines
+
+def test_attachment(header):
+	cd = llget(header, "Content-Disposition")
+	if len(cd) > 0:
+		if cd[0][1] == "attachment":
+			for [k, v] in cd[0][2]:
+				if k == "filename":
+					return v
+	return None

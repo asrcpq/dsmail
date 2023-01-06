@@ -1,11 +1,16 @@
-from emutil import parse_body, proc_word, split_block, llget
+from emutil import parse_body, proc_word, split_block, llget, test_attachment
+
+def pw(s, code):
+	return f"[3{code}m{s}[0m"
 
 def parse_header(lines):
 	headers = []
 	tmp_header = None
 	for line in lines:
 		line = line.rstrip()
-		if line[0].isspace():
+		cont = line[0].isspace()
+		line = " ".join([proc_word(w) for w in line.split(" ")]) # RFC2047
+		if cont:
 			tmp_header[1] += line.strip()
 			continue
 		if tmp_header:
@@ -21,10 +26,6 @@ def parse_header(lines):
 
 	for header in headers:
 		fields = [f.strip() for f in header[1].split(";")]
-		# rfc2047
-		for idx in range(len(fields)):
-			new_field = [proc_word(w) for w in fields[idx].split(" ")]
-			fields[idx] = " ".join(new_field)
 		header[1] = fields[0]
 		header.append([])
 		# x=y
@@ -44,13 +45,20 @@ def parse_header(lines):
 def proc_block(lines):
 	(header, body) = split_block(lines)
 	header = parse_header(header)
-	ct = llget(header, "Content-Type")[0][1]
-	if ct.startswith("multipart"):
-		delim = body[0]
+	ct = llget(header, "Content-Type")[0]
+	if ct[1].startswith("multipart"):
+		delim = llget(ct[2], "boundary")[0][1]
 		blocks = []
 		linebuf = []
-		for line in body[1:]:
+		first = True
+		for line in body:
+			line = line.rstrip()
 			if line == delim or line == delim + "--":
+				print("delim")
+				if first:
+					first = False
+					linebuf = []
+					continue
 				(h, b) = proc_block(linebuf)
 				blocks.append((h, b))
 				linebuf = []
@@ -64,10 +72,23 @@ def load_email(f):
 	lines = open(f).read().splitlines()
 	return proc_block(lines)
 
-def print_block(b):
-	if isinstance(b[1], list):
-		print(b[0], len(b[1]))
-		for b in b[1]:
-			print_block(b)
-		return
-	print(b[0], len(b[1]))
+def block_summary(b):
+	at = test_attachment(b[0])
+	if at:
+		print(at, len(b[1]))
+
+def summary(idx, path):
+	(h, bs) = load_email(path)
+	h_from = llget(h, "From")[0][1]
+	h_to = llget(h, "To")[0][1]
+	h_sub = llget(h, "Subject")[0][1]
+	print(pw(str(idx), 1), pw(h_from, 3), pw(h_to, 2), type(bs).__name__, len(bs), path)
+	print("\t" + h_sub)
+	if isinstance(bs, list):
+		for b in bs:
+			block_summary(b)
+
+if __name__ == "__main__":
+	import sys
+	for (idx, path) in enumerate(sys.argv[1:]):
+		summary(idx, path)

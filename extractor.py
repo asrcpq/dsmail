@@ -1,11 +1,15 @@
 from pathlib import Path, PurePath
 from emparse import load_email
-from emutil import llget
+from emutil import llget, test_attachment
 
 def extract(path):
 	(h, bs) = load_email(path)
 	name = PurePath(path).stem
-	Path(f"extract/{name}").mkdir()
+	p = Path(f"extract/{name}")
+	if p.exists():
+		print("skip {p}")
+		return
+	p.mkdir()
 
 	if isinstance(bs, str):
 		with open(f"extract/{name}/body", "w") as f:
@@ -13,14 +17,9 @@ def extract(path):
 		return
 		
 	for idx, (h, b) in enumerate(bs):
-		cd = llget(h, "Content-Disposition")
-		suffix = ""
-		if len(cd) > 0:
-			if cd[0][1] == "attachment":
-				for [k, v] in cd[0][2]:
-					if k == "filename":
-						suffix = f"-{v}"
-						break
+		suffix = test_attachment(h)
+		if not at:
+			suffix = ""
 		ext = ""
 		match llget(h, "Content-Type")[0][1]:
 			case "application/x-zip-compression":
