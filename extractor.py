@@ -7,7 +7,7 @@ def extract(path):
 	name = PurePath(path).stem
 	p = Path(f"extract/{name}")
 	if p.exists():
-		print("skip {p}")
+		print(f"already extracted {p}")
 		return
 	p.mkdir()
 

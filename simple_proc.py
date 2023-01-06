@@ -30,7 +30,7 @@ def action(table):
 			# archive mode, remove extracted
 			if target == "archive":
 				name = PurePath(f"{target}/{fn}").stem
-				directory = "extract/{name}"
+				directory = f"extract/{name}"
 				if os.path.exists(directory):
 					shutil.rmtree(directory)
 
