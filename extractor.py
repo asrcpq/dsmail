@@ -23,7 +23,7 @@ def extract(path):
 		ext = ""
 		match llget(h, "Content-Type")[0][1]:
 			case "application/x-zip-compression":
-				ext = ".xz"
+				ext = ".zip"
 		path = f"extract/{name}/{idx}{suffix}{ext}"
 		if isinstance(b, str):
 			with open(path, "w") as f:
