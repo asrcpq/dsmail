@@ -1,7 +1,7 @@
-imapsync provides modular tools to sync and process emails,
+provides modular tools to sync and process emails,
 without creating a maildir like structure
 
-Tools includes:
+Tools:
 
 * sync: the tool fetch remote mail, and move remote mails to archive folder.
 For safety this tool never delete mail.
