@@ -1,9 +1,12 @@
 imapsync provides modular tools to sync and process emails,
-for simplicity it does not create mail directory structure.
-several tools are provided here:
+without creating a maildir like structure
 
-* sync: the tool fetch remote mail, and move remote mails to archive folder
-(so you delete them like every year)
+why? read/unread is a useless design, mail should only "todo" or "done" states
+
+Tools includes:
+
+* sync: the tool fetch remote mail, and move remote mails to archive folder.
+For safety this tool never delete mail.
 
 * simple_proc: cli tool, show digest of mail so you can manually move mails from folders to folders
 by typing indices like "0 2 3 5"

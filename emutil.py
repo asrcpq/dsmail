@@ -73,4 +73,4 @@ def test_attachment(header):
 			vall = vall.replace("%", "")
 			bs = bytes.fromhex(vall)
 			return bs.decode(enc)
-	return None
+	return ""

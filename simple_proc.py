@@ -1,8 +1,33 @@
-from emparse import load_email, llget, block_summary, pw, summary
+from emparse import load_email, summary, display_email
+from emutil import llget
 from extractor import extract
 from pathlib import PurePath
-import os, shutil, sys
+import os, shutil, sys, readline
 import unicodedata
+from subprocess import Popen, PIPE
+
+def header_item(h, key):
+	result = ""
+	g = llget(h, key)
+	for gg in g:
+		result += key + ": " + gg[1] + "\n"
+	return result
+
+def action_read(fn):
+	path = f"{source}/{fn}"
+	(h, b) = load_email(path)
+
+	hs = ""
+	hs += header_item(h, "From")
+	hs += header_item(h, "To")
+	hs += header_item(h, "Subject")
+
+	proc = Popen(["less"], stdin = PIPE)
+	proc.stdin.write(hs.encode())
+	proc.stdin.write(b"\n")
+	proc.stdin.write(display_email(h, b).encode())
+	proc.stdin.close()
+	proc.wait()
 
 def action(table):
 	try:
@@ -11,6 +36,21 @@ def action(table):
 		print("EOF exit")
 		sys.exit(0)
 	ws = s.split()
+	
+	flag = True
+	match ws[0]:
+		case "r":
+			if len(ws) != 2:
+				print("bad read arity")
+				return
+			action_read(table[int(ws[1])])
+		case "q":
+			sys.exit(0)
+		case _:
+			flag = False
+	if flag:
+		return
+
 	if len(ws) == 0:
 		return
 	try:

@@ -67,6 +67,19 @@ def proc_block(lines):
 		blocks = parse_body(body, header)
 	return (header, blocks)
 
+def display_email(h, bs):
+	result = ""
+	if isinstance(bs, str):
+		result += bs + "\n"
+		return result
+	if isinstance(bs, bytes):
+		result += f"binary size {len(bs)}\n"
+		return result
+	for (h, b) in bs:
+		result += test_attachment(h)
+		result += display_email(h, b)
+	return result
+
 def load_email(f):
 	lines = open(f).read().splitlines()
 	return proc_block(lines)
@@ -74,7 +87,10 @@ def load_email(f):
 def block_summary(b):
 	at = test_attachment(b[0])
 	if at:
-		print(at, len(b[1]))
+		print(pw(f"{at} {len(b[1])}", 6))
+	else:
+		ct = llget(b[0], "Content-Type")[0][1]
+		print(pw("non-at block: {ct}", 6))
 
 def summary(idx, path):
 	(h, bs) = load_email(path)

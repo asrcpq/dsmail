@@ -2,6 +2,17 @@ from pathlib import Path, PurePath
 from emparse import load_email
 from emutil import llget, test_attachment
 
+def mime2ext(s):
+	ext = ""
+	match s.lower():
+		case "text/html":
+			ext = ".html"
+		case "text/plain":
+			ext = ".txt"
+		case "application/x-zip-compression":
+			ext = ".zip"
+	return ext
+
 def extract(path):
 	(h, bs) = load_email(path)
 	name = PurePath(path).stem
@@ -12,18 +23,14 @@ def extract(path):
 	p.mkdir()
 
 	if isinstance(bs, str):
-		with open(f"extract/{name}/body", "w") as f:
+		ext = mime2ext(llget(h, "Content-Type")[0][1])
+		with open(f"extract/{name}/body{ext}", "w") as f:
 			print(bs, file = f)
 		return
 		
 	for idx, (h, b) in enumerate(bs):
 		suffix = test_attachment(h)
-		if not at:
-			suffix = ""
-		ext = ""
-		match llget(h, "Content-Type")[0][1]:
-			case "application/x-zip-compression":
-				ext = ".zip"
+		ext = mime2ext(llget(h, "Content-Type")[0][1])
 		path = f"extract/{name}/{idx}{suffix}{ext}"
 		if isinstance(b, str):
 			with open(path, "w") as f:
