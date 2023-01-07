@@ -3,13 +3,52 @@ from emutil import parse_body, proc_word, split_block, llget, test_attachment
 def pw(s, code):
 	return f"[3{code}m{s}[0m"
 
+def proc_rfc2047(s):
+	state = 0
+	stack = ""
+	result = []
+	for ch in s:
+		stack += ch
+		match state:
+			case 0:
+				if ch == "=":
+					state = 1
+				continue
+			case 1:
+				if ch == "=":
+					state = 1
+				elif ch == "?":
+					result.append(stack[:-2])
+					stack = "=?"
+					state = 2
+				else:
+					state = 0
+				continue
+			case 5:
+				if ch == "=":
+					result.append(stack)
+					stack = ""
+					state = 0
+				else:
+					raise Exception(f"Bad RFC2047: last ? not ?=: {s}")
+			case _:
+				if ch == "?":
+					state += 1
+					if state == 5:
+						state
+				continue
+	if stack:
+		result.append(stack)
+	return "".join([proc_word(w) for w in result])
+
 def parse_header(lines):
 	headers = []
 	tmp_header = None
 	for line in lines:
 		line = line.rstrip()
 		cont = line[0].isspace()
-		line = " ".join([proc_word(w) for w in line.split(" ")]) # RFC2047
+		line = proc_rfc2047(line) # RFC2047
+
 		if cont:
 			tmp_header[1] += line.strip()
 			continue
@@ -90,10 +129,10 @@ def load_email(f):
 def block_summary(b):
 	at = test_attachment(b[0])
 	if at:
-		print(pw(f"{at} {len(b[1])}", 6))
+		print(pw(f"{at} {len(b[1])}", 4))
 	else:
 		ct = llget(b[0], "content-type")[0][1]
-		print(pw(f"non-at block: {ct}", 6))
+		print(pw(f"non-at block: {ct}", 4))
 
 def summary(idx, path):
 	# print(path)

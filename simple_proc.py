@@ -92,7 +92,8 @@ target_dict = {
 
 def ptable():
 	table = []
-	max_items = 20
+	# max_items = 20
+	max_items = -1
 	for idx, file in enumerate(os.listdir(source)[:max_items]):
 		table.append(file)
 		ll = 20
