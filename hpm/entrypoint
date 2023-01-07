@@ -2,7 +2,7 @@ if [ "$1" = "server" ]; then
 	cd "$(dirname "$0")/.."
 	while true; do
 		date -u +"%FT%TZ"
-		python3 sync.py "$1"
+		python3 sync.py "$2"
 		sleep 101
 	done
 elif [ "$1" = "proc" ]; then

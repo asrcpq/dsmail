@@ -23,14 +23,14 @@ def extract(path):
 	p.mkdir()
 
 	if isinstance(bs, str):
-		ext = mime2ext(llget(h, "Content-Type")[0][1])
+		ext = mime2ext(llget(h, "content-type")[0][1])
 		with open(f"extract/{name}/body{ext}", "w") as f:
 			print(bs, file = f)
 		return
 		
 	for idx, (h, b) in enumerate(bs):
 		suffix = test_attachment(h)
-		ext = mime2ext(llget(h, "Content-Type")[0][1])
+		ext = mime2ext(llget(h, "content-type")[0][1])
 		path = f"extract/{name}/{idx}{suffix}{ext}"
 		if isinstance(b, str):
 			with open(path, "w") as f:

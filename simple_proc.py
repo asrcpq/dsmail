@@ -18,9 +18,9 @@ def action_read(fn):
 	(h, b) = load_email(path)
 
 	hs = ""
-	hs += header_item(h, "From")
-	hs += header_item(h, "To")
-	hs += header_item(h, "Subject")
+	hs += header_item(h, "from")
+	hs += header_item(h, "to")
+	hs += header_item(h, "subject")
 
 	proc = Popen(["less"], stdin = PIPE)
 	proc.stdin.write(hs.encode())
@@ -92,7 +92,8 @@ target_dict = {
 
 def ptable():
 	table = []
-	for idx, file in enumerate(os.listdir(source)):
+	max_items = 20
+	for idx, file in enumerate(os.listdir(source)[:max_items]):
 		table.append(file)
 		ll = 20
 		summary(idx, f"{source}/{file}")

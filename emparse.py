@@ -15,11 +15,11 @@ def parse_header(lines):
 			continue
 		if tmp_header:
 			headers.append(tmp_header)
-		sp = line.split(": ", 1)
+		sp = line.split(":", 1)
 		if len(sp) == 1:
-			tmp_header = [sp[0], ""]
+			tmp_header = [sp[0].lower(), ""]
 		else:
-			tmp_header = [sp[0], sp[1]]
+			tmp_header = [sp[0].lower(), sp[1].strip()]
 	# push the last header field
 	if tmp_header:
 		headers.append(tmp_header)
@@ -45,7 +45,10 @@ def parse_header(lines):
 def proc_block(lines):
 	(header, body) = split_block(lines)
 	header = parse_header(header)
-	ct = llget(header, "Content-Type")[0]
+	# import pprint
+	# pp = pprint.PrettyPrinter()
+	# pp.pprint(header)
+	ct = llget(header, "content-type")[0]
 	if ct[1].startswith("multipart"):
 		delim = llget(ct[2], "boundary")[0][1]
 		blocks = []
@@ -89,14 +92,27 @@ def block_summary(b):
 	if at:
 		print(pw(f"{at} {len(b[1])}", 6))
 	else:
-		ct = llget(b[0], "Content-Type")[0][1]
-		print(pw("non-at block: {ct}", 6))
+		ct = llget(b[0], "content-type")[0][1]
+		print(pw(f"non-at block: {ct}", 6))
 
 def summary(idx, path):
+	# print(path)
 	(h, bs) = load_email(path)
-	h_from = llget(h, "From")[0][1]
-	h_to = llget(h, "To")[0][1]
-	h_sub = llget(h, "Subject")[0][1]
+	h_from = llget(h, "from")
+	if not h_from:
+		h_from = llget(h, "x-from-email")
+	h_from = h_from[0][1]
+
+	h_to = llget(h, "to")
+	if not h_to:
+		h_to = llget(h, "reply-to")
+	h_to = h_to[0][1]
+
+	h_sub = llget(h, "subject")
+	if not h_sub:
+		h_sub = "No Subject"
+	else:
+		h_sub = h_sub[0][1]
 	print(pw(str(idx), 1), pw(h_from, 3), pw(h_to, 2), type(bs).__name__, len(bs), path)
 	print("\t" + h_sub)
 	if isinstance(bs, list):

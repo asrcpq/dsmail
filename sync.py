@@ -30,22 +30,14 @@ def create_archive_dir(m):
 		# should only have 3 
 		sp = line.decode().rsplit(" ", 2)
 		[prop, delim, path] = sp
-		if delim == '"/"':
-			delim = "/"
-		elif delim == '"."':
-			delim = "."
-		else:
-			raise Exception(f"Strange delim: {delim}, stop for safety")
-		# dirty workaround
+		# dirty
 		path = path.removeprefix('"')
 		path = path.removesuffix('"')
-		if path == f"Archives{delim}{year}":
+		if path == f"Archive":
 			found = True
 			break
 	if not found:
-		chk(m.create(f"Archives{delim}{year}"))
-		print('happy new year!', file = sys.stderr)
-	return delim
+		chk(m.create(f"Archive"))
 
 def get_indices(name, m, box):
 	(rep, data) = m.search(None, "ALL")
@@ -62,22 +54,21 @@ def proc_download(name, m, box, indices):
 			f.write(data)
 			print(f"recv mail size: {len(data)}", file = sys.stderr)
 
-def proc_copy(m, indices, delim):
+def proc_copy(m, indices):
 	for i in reversed(indices.split()):
-		chk(m.copy(i, f"Archives{delim}{year}"))
+		chk(m.copy(i, f"Archive"))
 		m.store(i, "+FLAGS", "\\Deleted")
 	# m.expunge()
 
 def proc_account(name, m, box):
-	delim = create_archive_dir(m)
-	(rep, data) = m.select(box)
+	create_archive_dir(m)
+	chk(m.select(box))
 	indices = get_indices(name, m, box)
 	proc_download(name, m, box, indices)
-	proc_copy(m, indices, delim)
+	proc_copy(m, indices)
 	m.close()
 
 # prepare global variables
-year = datetime.date.today().year
 localdir = "inbox"
 epoch = get_epoch()
 
