@@ -1,6 +1,7 @@
 import os, sys, datetime
 import imaplib, tomllib
 import time
+from pathlib import Path
 
 def chk(x):
 	ret, data = x
@@ -73,6 +74,8 @@ localdir = "inbox"
 epoch = get_epoch()
 
 if __name__ == "__main__":
+	for directory in ["inbox", "todo", "archive", "extract"]:
+		Path(directory).mkdir(exist_ok = True)
 	conf = tomllib.load(open(sys.argv[1], "rb"))
 	for (name, ac) in conf["accounts"].items():
 		m = login(ac)

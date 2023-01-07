@@ -87,13 +87,13 @@ if len(sys.argv) >= 2:
 target_dict = {
 	"a": "archive",
 	"t": "todo",
-	"e": "extract",
+	"x": "extract",
 }
 
 def ptable():
 	table = []
-	# max_items = 20
-	max_items = -1
+	max_items = 20
+	# max_items = None
 	for idx, file in enumerate(os.listdir(source)[:max_items]):
 		table.append(file)
 		ll = 20

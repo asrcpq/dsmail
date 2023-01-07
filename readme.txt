@@ -1,8 +1,6 @@
 imapsync provides modular tools to sync and process emails,
 without creating a maildir like structure
 
-why? read/unread is a useless design, mail should only "todo" or "done" states
-
 Tools includes:
 
 * sync: the tool fetch remote mail, and move remote mails to archive folder.
