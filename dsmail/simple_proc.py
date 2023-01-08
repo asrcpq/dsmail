@@ -75,23 +75,22 @@ def action(table):
 			extract(src)
 			continue
 		flush = True
-		shutil.move(src, f"{target}/{fn}")
+		shutil.move(src, f"data/{target}/{fn}")
 
 		# archive mode, remove extracted
 		if target == "archive":
-			name = PurePath(f"{target}/{fn}").stem
-			directory = f"extract/{name}"
+			name = PurePath(f"data/{target}/{fn}").stem
+			directory = f"data/extract/{name}"
 			if os.path.exists(directory):
 				print("remove extracted", directory)
 				shutil.rmtree(directory)
 
-source = "inbox"
 if len(sys.argv) >= 2:
 	match sys.argv[1]:
 		case "inbox":
-			pass
+			source = "data/inbox"
 		case "todo":
-			source = "todo"
+			source = "data/todo"
 		case _:
 			raise Exception(sys.argv[1])
 

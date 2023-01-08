@@ -70,12 +70,12 @@ def proc_account(name, m, box):
 	m.close()
 
 # prepare global variables
-localdir = "inbox"
+localdir = "data/inbox"
 epoch = get_epoch()
 
 if __name__ == "__main__":
 	for directory in ["inbox", "todo", "archive", "extract"]:
-		Path(directory).mkdir(exist_ok = True)
+		Path(f"data/{directory}").mkdir(exist_ok = True)
 	conf = tomllib.load(open(sys.argv[1], "rb"))
 	for (name, ac) in conf["accounts"].items():
 		m = login(ac)

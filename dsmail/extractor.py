@@ -13,10 +13,11 @@ def mime2ext(s):
 			ext = ".zip"
 	return ext
 
+px = "data/extract"
 def extract(path):
 	(h, bs) = load_email(path)
 	name = PurePath(path).stem
-	p = Path(f"extract/{name}")
+	p = Path(f"{px}/{name}")
 	if p.exists():
 		print(f"already extracted {p}")
 		return
@@ -24,14 +25,14 @@ def extract(path):
 
 	if isinstance(bs, str):
 		ext = mime2ext(llget(h, "content-type")[0][1])
-		with open(f"extract/{name}/body{ext}", "w") as f:
+		with open(f"{px}/{name}/body{ext}", "w") as f:
 			print(bs, file = f)
 		return
 		
 	for idx, (h, b) in enumerate(bs):
 		suffix = test_attachment(h)
 		ext = mime2ext(llget(h, "content-type")[0][1])
-		path = f"extract/{name}/{idx}{suffix}{ext}"
+		path = f"{px}/{name}/{idx}{suffix}{ext}"
 		if isinstance(b, str):
 			with open(path, "w") as f:
 				print(b, file = f)
