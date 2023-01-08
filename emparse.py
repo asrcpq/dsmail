@@ -1,4 +1,5 @@
 from emutil import parse_body, proc_word, split_block, llget, test_attachment
+import subprocess, shutil
 
 def pw(s, code):
 	return f"[3{code}m{s}[0m"
@@ -109,9 +110,16 @@ def proc_block(lines):
 		blocks = parse_body(body, header)
 	return (header, blocks)
 
+has_pandoc = shutil.which("pandoc") is not None
 def display_email(h, bs):
 	result = ""
 	if isinstance(bs, str):
+		ct = llget(h, "content-type")[0][1]
+		if ct == "text/html" and has_pandoc:
+			bs = subprocess.check_output(["pandoc", "-f", "html", "-t", "plain"],
+				input = bs,
+				text = True,
+			)
 		result += bs + "\n"
 		return result
 	if isinstance(bs, bytes):

@@ -23,32 +23,41 @@ def action_read(fn):
 	hs += header_item(h, "subject")
 
 	proc = Popen(["less"], stdin = PIPE)
+	# proc = Popen(["cat"], stdin = PIPE)
 	proc.stdin.write(hs.encode())
 	proc.stdin.write(b"\n")
 	proc.stdin.write(display_email(h, b).encode())
 	proc.stdin.close()
 	proc.wait()
 
+def action1(ws, table):
+	global flush
+	match ws[0]:
+		case "r":
+			if len(ws) != 2:
+				print("bad read arity")
+				return
+			try:
+				action_read(table[int(ws[1])])
+			except Exception as e:
+				print("read failed:", e)
+		case "p":
+			flush = True
+		case "q":
+			sys.exit(0)
+		case _:
+			return False
+	return True
+
 def action(table):
+	global flush
 	try:
 		s = input("> ")
 	except EOFError:
 		print("EOF exit")
 		sys.exit(0)
 	ws = s.split()
-	
-	flag = True
-	match ws[0]:
-		case "r":
-			if len(ws) != 2:
-				print("bad read arity")
-				return
-			action_read(table[int(ws[1])])
-		case "q":
-			sys.exit(0)
-		case _:
-			flag = False
-	if flag:
+	if action1(ws, table):
 		return
 
 	if len(ws) == 0:
@@ -64,15 +73,17 @@ def action(table):
 
 		if target == "extract":
 			extract(src)
-		else:
-			shutil.move(src, f"{target}/{fn}")
+			continue
+		flush = True
+		shutil.move(src, f"{target}/{fn}")
 
-			# archive mode, remove extracted
-			if target == "archive":
-				name = PurePath(f"{target}/{fn}").stem
-				directory = f"extract/{name}"
-				if os.path.exists(directory):
-					shutil.rmtree(directory)
+		# archive mode, remove extracted
+		if target == "archive":
+			name = PurePath(f"{target}/{fn}").stem
+			directory = f"extract/{name}"
+			if os.path.exists(directory):
+				print("remove extracted", directory)
+				shutil.rmtree(directory)
 
 source = "inbox"
 if len(sys.argv) >= 2:
@@ -100,8 +111,11 @@ def ptable():
 		summary(idx, f"{source}/{file}")
 	return table
 
+flush = True
 while True:
-	table = ptable()
+	if flush:
+		table = ptable()
+		flush = False
 	if not table:
 		print("All mails proc, exit")
 		sys.exit(0)
