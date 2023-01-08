@@ -7,7 +7,7 @@ if [ "$1" = "server" ]; then
 	done
 elif [ "$1" = "proc" ]; then
 	cd "$(dirname "$0")/.."
-	python3 simple_proc.py
+	python3 simple_proc.py "$2"
 else
 	exit 1
 fi
