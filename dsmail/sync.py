@@ -74,6 +74,7 @@ localdir = "data/inbox"
 epoch = get_epoch()
 
 if __name__ == "__main__":
+	Path(f"data").mkdir(exist_ok = True)
 	for directory in ["inbox", "todo", "archive", "extract"]:
 		Path(f"data/{directory}").mkdir(exist_ok = True)
 	conf = tomllib.load(open(sys.argv[1], "rb"))
